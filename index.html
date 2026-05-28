@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PVG → HKG · Flight Compare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    :root {
+      --bg: #f4f3ef;
+      --surface: #ffffff;
+      --surface-hover: #faf9f5;
+      --text: #1a1a18;
+      --text-secondary: #6b6a64;
+      --text-muted: #a09e95;
+      --accent: #7a8b6f;
+      --accent-light: #e8ede4;
+      --accent-dark: #5c6b52;
+      --border: #e2e0d8;
+      --border-light: #efede7;
+      --shadow: 0 2px 12px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+      --shadow-hover: 0 8px 30px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.03);
+      --radius: 20px;
+      --radius-sm: 12px;
+      --transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; font-weight: 600; letter-spacing: -0.02em; }
+    .hero { min-height: 100dvh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    .hero-inner { display: grid; grid-template-columns: 1fr 1fr; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; padding: 0 40px; }
+    .hero-left { display: flex; flex-direction: column; justify-content: center; padding: 120px 60px 80px 0; }
+    .hero-right { display: flex; align-items: center; justify-content: center; position: relative; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-light); color: var(--accent-dark); font-size: 0.8rem; font-weight: 600; padding: 6px 16px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 28px; width: fit-content; }
+    .hero-badge svg { width: 14px; height: 14px; }
+    .hero h1 { font-size: clamp(2.6rem, 5vw, 4rem); font-weight: 700; line-height: 1.05; letter-spacing: -0.03em; color: var(--text); margin-bottom: 20px; }
+    .hero h1 span { color: var(--accent); }
+    .hero p { font-size: 1.1rem; color: var(--text-secondary); max-width: 45ch; line-height: 1.7; margin-bottom: 36px; }
+    .hero-stats { display: flex; gap: 40px; }
+    .hero-stat h3 { font-size: 2rem; font-weight: 700; color: var(--text); line-height: 1; }
+    .hero-stat p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0; margin-top: 4px; }
+    .hero-visual { width: 100%; max-width: 480px; aspect-ratio: 1; position: relative; }
+    .hero-globe { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d4dcd0, #bcc8b4, #a8b8a0); position: relative; overflow: hidden; }
+    .hero-globe::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(ellipse at 45% 50%, transparent 50%, rgba(0,0,0,0.04) 100%), repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(255,255,255,0.08) 10px, rgba(255,255,255,0.08) 11px); }
+    .route-arc { position: absolute; top: 50%; left: 50%; width: 80%; height: 80%; transform: translate(-50%, -50%); pointer-events: none; }
+    .route-arc svg { width: 100%; height: 100%; }
+    .scroll-indicator { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-muted); font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; animation: float 2s ease-in-out infinite; }
+    .scroll-indicator svg { width: 18px; height: 18px; }
+    @keyframes float { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; transition: var(--transition); }
+    nav.scrolled { background: rgba(244,243,239,0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-light); padding: 14px 40px; }
+    .logo { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.02em; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .logo svg { width: 22px; height: 22px; }
+    .nav-actions { display: flex; align-items: center; gap: 24px; }
+    .nav-actions a { color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: var(--transition); }
+    .nav-actions a:hover { color: var(--text); }
+    .flights-section { max-width: 1200px; margin: 0 auto; padding: 40px 40px 80px; }
+    .flights-header { margin-bottom: 36px; }
+    .flights-header h2 { font-size: 2rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .flights-header p { color: var(--text-secondary); font-size: 1rem; }
+    .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 32px; padding: 20px 24px; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
+    .control-group { display: flex; align-items: center; gap: 8px; }
+    .control-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .control-group select, .control-group input[type="date"] { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text); outline: none; transition: var(--transition); cursor: pointer; appearance: auto; }
+    .control-group select:focus, .control-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(122,139,111,0.12); }
+    .filter-badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 100px; font-size: 0.85rem; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: var(--transition); user-select: none; }
+    .filter-badge:hover { border-color: var(--accent); color: var(--accent-dark); background: var(--accent-light); }
+    .filter-badge.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .filter-badge.active svg { stroke: white; }
+    .filter-badge svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .results-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 0.85rem; color: var(--text-muted); }
+    .results-count { font-weight: 500; color: var(--text-secondary); }
+    .recommendation-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+    .rec-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 12px; border-radius: 100px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .rec-tag.cheapest { background: #eaf6ed; color: #2d6a4f; }
+    .rec-tag.fastest { background: #e8edf5; color: #3a5a8c; }
+    .rec-tag.value { background: #f5ece8; color: #8c5a3a; }
+    .flight-grid { display: flex; flex-direction: column; gap: 12px; }
+    .flight-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; display: grid; grid-template-columns: auto 1fr auto; gap: 20px; align-items: center; transition: var(--transition); cursor: default; position: relative; overflow: hidden; }
+    .flight-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: transparent; transition: var(--transition); }
+    .flight-card:hover { border-color: var(--accent); box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+    .flight-card:hover::before { background: var(--accent); }
+    .flight-card.recommended { border-color: var(--accent); background: linear-gradient(135deg, var(--surface) 0%, #f8faf6 100%); }
+    .flight-card.recommended::before { background: var(--accent); }
+    .flight-airline { display: flex; align-items: center; gap: 14px; min-width: 180px; }
+    .airline-logo { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.75rem; color: white; flex-shrink: 0; letter-spacing: 0.02em; }
+    .airline-info h4 { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 1px; }
+    .airline-info p { font-size: 0.8rem; color: var(--text-muted); }
+    .airline-code { font-size: 0.7rem; color: var(--text-muted); background: var(--bg); padding: 1px 8px; border-radius: 4px; font-weight: 500; }
+    .flight-time-col { display: flex; align-items: center; gap: 16px; justify-content: center; }
+    .flight-time { text-align: center; }
+    .flight-time .time { font-size: 1.2rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+    .flight-time .airport { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+    .flight-arrow { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 8px; }
+    .flight-arrow .duration { font-size: 0.75rem; font-weight: 600; color: var(--accent-dark); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .flight-arrow svg { width: 60px; height: 16px; stroke: var(--border); fill: none; stroke-width: 1.5; }
+    .flight-arrow .layover-label { font-size: 0.65rem; color: var(--text-muted); font-weight: 500; }
+    .flight-price-col { text-align: right; min-width: 120px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .flight-price { font-size: 1.5rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
+    .flight-price .currency { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+    .flight-type { font-size: 0.7rem; font-weight: 500; padding: 2px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .flight-type.direct { background: var(--accent-light); color: var(--accent-dark); }
+    .flight-type.connecting { background: #f0ede8; color: #8c7a5a; }
+    footer { text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--border-light); }
+
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; padding: 0 24px; }
+      .hero-left { padding: 100px 0 40px; }
+      .hero-right { display: none; }
+      .hero-stats { gap: 24px; }
+      nav { padding: 16px 24px; }
+      nav.scrolled { padding: 12px 24px; }
+      .flights-section { padding: 24px 24px 60px; }
+      .flight-card { grid-template-columns: 1fr; gap: 16px; padding: 20px; }
+      .flight-airline { min-width: unset; }
+      .flight-price-col { text-align: left; align-items: flex-start; flex-direction: row; justify-content: space-between; width: 100%; }
+      .controls { padding: 16px; flex-direction: column; align-items: flex-start; }
+      .recommendation-bar { width: 100%; }
+    }
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 2rem; }
+      .hero-stat h3 { font-size: 1.5rem; }
+      .flight-time-col { gap: 10px; }
+      .flight-time .time { font-size: 1rem; }
+      .flight-arrow svg { width: 40px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in { opacity: 1; transform: none; animation: none; }
+      .scroll-indicator { animation: none; }
+      .flight-card { transition: none; }
+      .flight-card:hover { transform: none; }
+    }
+    .fade-in { opacity: 0; transform: translateY(20px); animation: fadeIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+    .fade-in:nth-child(1) { animation-delay: 0s; }
+    .fade-in:nth-child(2) { animation-delay: 0.05s; }
+    .fade-in:nth-child(3) { animation-delay: 0.1s; }
+    .fade-in:nth-child(4) { animation-delay: 0.15s; }
+    .fade-in:nth-child(5) { animation-delay: 0.2s; }
+    .fade-in:nth-child(6) { animation-delay: 0.25s; }
+    .fade-in:nth-child(7) { animation-delay: 0.3s; }
+    .fade-in:nth-child(8) { animation-delay: 0.35s; }
+    .fade-in:nth-child(9) { animation-delay: 0.4s; }
+    .fade-in:nth-child(10) { animation-delay: 0.45s; }
+    .fade-in:nth-child(11) { animation-delay: 0.5s; }
+    .fade-in:nth-child(12) { animation-delay: 0.55s; }
+  </style>
+</head>
+<body>
+  <nav id="navbar">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+      SkyCompare
+    </div>
+    <div class="nav-actions">
+      <a href="#flights">Flights</a>
+      <a href="#about">About</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <div class="hero-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="heroDate">Monday, June 15, 2026</span>
+        </div>
+        <h1>Shanghai to<br><span>Hong Kong</span></h1>
+        <p>
+          Compare every flight from PVG to HKG. Real prices, real schedules, real choices.
+          Sort, filter, pick a different date, and find your ideal departure in seconds.
+        </p>
+        <div class="hero-stats">
+          <div class="hero-stat"><h3 id="totalFlights">0</h3><p>flights tracked</p></div>
+          <div class="hero-stat"><h3 id="totalAirlines">0</h3><p>airlines operating</p></div>
+          <div class="hero-stat"><h3 id="priceRange">$0</h3><p>price range one-way</p></div>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-visual">
+          <div class="hero-globe">
+            <svg class="route-arc" viewBox="0 0 200 200">
+              <path d="M 40 70 Q 100 120 165 85" fill="none" stroke="rgba(92,107,82,0.3)" stroke-width="2" stroke-dasharray="6 4"/>
+              <path d="M 40 70 Q 100 130 165 85" fill="none" stroke="rgba(92,107,82,0.15)" stroke-width="1.5" stroke-dasharray="3 4"/>
+              <circle cx="40" cy="70" r="3" fill="#5c6b52"/>
+              <circle cx="165" cy="85" r="3" fill="#5c6b52"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      Scroll
+    </div>
+  </section>
+
+  <section class="flights-section" id="flights">
+    <div class="flights-header">
+      <h2>Available Flights</h2>
+      <p id="sectionDate">One-way from Shanghai (PVG) to Hong Kong (HKG) &middot; Monday, June 15, 2026</p>
+    </div>
+    <div class="controls">
+      <div class="control-group">
+        <label for="date-picker">Date</label>
+        <input type="date" id="date-picker" min="2026-06-01" max="2026-06-30" value="2026-06-15">
+      </div>
+      <div class="control-group">
+        <label for="sort">Sort</label>
+        <select id="sort">
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="duration-asc">Duration: Shortest First</option>
+          <option value="duration-desc">Duration: Longest First</option>
+          <option value="departure">Departure: Earliest First</option>
+        </select>
+      </div>
+      <div class="control-group" style="margin-left:8px;">
+        <label for="airline-filter">Airline</label>
+        <select id="airline-filter"><option value="all">All Airlines</option></select>
+      </div>
+      <div style="flex:1;min-width:20px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="filter-badge active" data-filter="all" onclick="setFilter('all')">
+          <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+          All
+        </button>
+        <button class="filter-badge" data-filter="direct" onclick="setFilter('direct')">
+          <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Direct
+        </button>
+        <button class="filter-badge" data-filter="connecting" onclick="setFilter('connecting')">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Connecting
+        </button>
+      </div>
+    </div>
+    <div class="results-meta">
+      <span class="results-count" id="resultsCount">Showing 0 flights</span>
+      <div class="recommendation-bar" id="recBar"></div>
+    </div>
+    <div class="flight-grid" id="flightGrid"></div>
+  </section>
+
+  <footer>
+    Data compiled from airline schedules and booking platforms. Prices are indicative and may vary at the time of booking.<br>
+    SkyCompare &middot; PVG &rarr; HKG &middot; June 2026
+  </footer>
+
+  <script>
+    function dayName(d) { return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d]; }
+    function monthName(d) { return ['January','February','March','April','May','June','July','August','September','October','November','December'][d.getMonth()]; }
+    function formatDate(s) { var d=new Date(s+'T00:00:00'); return dayName(d.getDay())+', '+monthName(d)+' '+d.getDate()+', '+d.getFullYear(); }
+    function dayOfWeek(s) { return new Date(s+'T00:00:00').getDay(); }
+    function dayMult(s) { var d=dayOfWeek(s); return d>=5?1.18:d===0?1.10:d<=2?0.92:1.0; }
+
+    var flights=[{id:1,airline:'Spring Airlines',code:'9C',flightNo:'9C 8889',dep:'07:15',arr:'10:20',duration:185,durationStr:'3h 05m',basePrice:72,type:'direct',layoverCity:null,layoverDuration:null,color:'#d64f4f',days:[0,1,2,3,4,5,6]},{id:2,airline:'Hong Kong Airlines',code:'HX',flightNo:'HX 236',dep:'07:35',arr:'10:20',duration:165,durationStr:'2h 45m',basePrice:83,type:'direct',layoverCity:null,layoverDuration:null,color:'#b8863a',days:[1,2,3,4,5,6]},{id:3,airline:'Juneyao Airlines',code:'HO',flightNo:'HO 1295',dep:'07:55',arr:'10:40',duration:165,durationStr:'2h 45m',basePrice:82,type:'direct',layoverCity:null,layoverDuration:null,color:'#1a7a5c',days:[0,1,2,3,4,5,6]},{id:4,airline:'Shanghai Airlines',code:'FM',flightNo:'FM 3013',dep:'08:15',arr:'11:10',duration:175,durationStr:'2h 55m',basePrice:88,type:'direct',layoverCity:null,layoverDuration:null,color:'#2c6b8f',days:[0,1,2,3,4,5,6]},{id:5,airline:'Air China',code:'CA',flightNo:'CA 8313',dep:'08:30',arr:'11:20',duration:170,durationStr:'2h 50m',basePrice:91,type:'direct',layoverCity:null,layoverDuration:null,color:'#a82e2e',days:[1,2,3,4,5]},{id:6,airline:'China Eastern Airlines',code:'MU',flightNo:'MU 509',dep:'09:40',arr:'12:45',duration:185,durationStr:'3h 05m',basePrice:78,type:'direct',layoverCity:null,layoverDuration:null,color:'#1a6bb5',days:[0,1,2,3,4,5,6]},{id:7,airline:'Spring Airlines',code:'9C',flightNo:'9C 8895',dep:'09:15',arr:'12:20',duration:185,durationStr:'3h 05m',basePrice:76,type:'direct',layoverCity:null,layoverDuration:null,color:'#d64f4f',days:[0,1,2,3,4,5,6]},{id:8,airline:'Hong Kong Express',code:'UO',flightNo:'UO 163',dep:'12:00',arr:'15:00',duration:180,durationStr:'3h 00m',basePrice:70,type:'direct',layoverCity:null,layoverDuration:null,color:'#8a2f6e',days:[1,2,3,4,5,6]},{id:9,airline:'Cathay Pacific',code:'CX',flightNo:'CX 8364',dep:'12:05',arr:'14:55',duration:170,durationStr:'2h 50m',basePrice:89,type:'direct',layoverCity:null,layoverDuration:null,color:'#1f3a6b',days:[1,2,3,4,5,6]},{id:10,airline:'Hong Kong Airlines',code:'HX',flightNo:'HX 238',dep:'13:40',arr:'16:25',duration:165,durationStr:'2h 45m',basePrice:86,type:'direct',layoverCity:null,layoverDuration:null,color:'#b8863a',days:[0,1,2,3,4,5,6]},{id:11,airline:'Juneyao Airlines',code:'HO',flightNo:'HO 1297',dep:'16:45',arr:'19:40',duration:175,durationStr:'2h 55m',basePrice:80,type:'direct',layoverCity:null,layoverDuration:null,color:'#1a7a5c',days:[0,1,2,3,4,5,6]},{id:12,airline:'Shanghai Airlines',code:'FM',flightNo:'FM 3023',dep:'13:00',arr:'15:55',duration:175,durationStr:'2h 55m',basePrice:90,type:'direct',layoverCity:null,layoverDuration:null,color:'#2c6b8f',days:[0,1,2,3,4,5,6]},{id:13,airline:'China Eastern Airlines',code:'MU',flightNo:'MU 501',dep:'06:20',arr:'08:45',duration:145,durationStr:'2h 25m',basePrice:95,type:'direct',layoverCity:null,layoverDuration:null,color:'#1a6bb5',days:[0,1,2,3,4,5,6]},{id:14,airline:'Cathay Pacific',code:'CX',flightNo:'CX 358',dep:'07:20',arr:'10:10',duration:170,durationStr:'2h 50m',basePrice:87,type:'direct',layoverCity:null,layoverDuration:null,color:'#1f3a6b',days:[0,1,2,3,4,5]},{id:15,airline:'Xiamen Airlines',code:'MF',flightNo:'MF 8556 / MF 8651',dep:'10:00',arr:'14:30',duration:270,durationStr:'4h 30m',basePrice:62,type:'connecting',layoverCity:'Xiamen (XMN)',layoverDuration:'1h 20m',color:'#2a7a9a',days:[0,1,2,3,4,5,6]},{id:16,airline:'Shenzhen Airlines',code:'ZH',flightNo:'ZH 9508 / ZH 9003',dep:'07:30',arr:'12:00',duration:270,durationStr:'4h 30m',basePrice:65,type:'connecting',layoverCity:'Shenzhen (SZX)',layoverDuration:'1h 00m',color:'#2a6b6b',days:[1,2,3,4,5,6]},{id:17,airline:'China Southern Airlines',code:'CZ',flightNo:'CZ 3586 / CZ 5307',dep:'08:00',arr:'13:00',duration:300,durationStr:'5h 00m',basePrice:60,type:'connecting',layoverCity:'Guangzhou (CAN)',layoverDuration:'1h 40m',color:'#1a7a3a',days:[0,1,2,3,4,5,6]},{id:18,airline:'China Southern Airlines',code:'CZ',flightNo:'CZ 8886 / CZ 5009',dep:'14:30',arr:'20:00',duration:330,durationStr:'5h 30m',basePrice:55,type:'connecting',layoverCity:'Guangzhou (CAN)',layoverDuration:'2h 15m',color:'#1a7a3a',days:[0,1,2,3,4,5,6]},{id:19,airline:'Xiamen Airlines',code:'MF',flightNo:'MF 8578 / MF 8693',dep:'18:30',arr:'23:15',duration:285,durationStr:'4h 45m',basePrice:58,type:'connecting',layoverCity:'Fuzhou (FOC)',layoverDuration:'1h 30m',color:'#2a7a9a',days:[0,1,2,3,4,5,6]},{id:20,airline:'Shenzhen Airlines',code:'ZH',flightNo:'ZH 9512 / ZH 9007',dep:'15:00',arr:'19:30',duration:270,durationStr:'4h 30m',basePrice:63,type:'connecting',layoverCity:'Shenzhen (SZX)',layoverDuration:'1h 10m',color:'#2a6b6b',days:[0,1,2,3,4,5,6]}];
+
+    var currentFilter='all',currentSort='price-asc',currentAirline='all',currentDate='2026-06-15';
+    var grid=document.getElementById('flightGrid'),resCnt=document.getElementById('resultsCount'),recBar=document.getElementById('recBar');
+    var srt=document.getElementById('sort'),air=document.getElementById('airline-filter'),dp=document.getElementById('date-picker');
+    var hd=document.getElementById('heroDate'),sd=document.getElementById('sectionDate');
+
+    [...new Set(flights.map(function(f){return f.airline}))].sort().forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;air.appendChild(o);});
+
+    function getFlights(ds){
+      var day=dayOfWeek(ds),mult=dayMult(ds);
+      return flights.filter(function(f){return f.days.indexOf(day)>-1;}).map(function(f){return Object.assign({},f,{price:Math.round(f.basePrice*mult)});});
+    }
+
+    function render(){
+      var active=getFlights(currentDate);
+      if(currentAirline!=='all') active=active.filter(function(f){return f.airline===currentAirline;});
+      if(currentFilter==='direct') active=active.filter(function(f){return f.type==='direct';});
+      else if(currentFilter==='connecting') active=active.filter(function(f){return f.type==='connecting';});
+
+      switch(currentSort){
+        case'price-asc':active.sort(function(a,b){return a.price-b.price;});break;
+        case'price-desc':active.sort(function(a,b){return b.price-a.price;});break;
+        case'duration-asc':active.sort(function(a,b){return a.duration-b.duration;});break;
+        case'duration-desc':active.sort(function(a,b){return b.duration-a.duration;});break;
+        case'departure':active.sort(function(a,b){var ta=a.dep.split(':'),tb=b.dep.split(':');return(ta[0]*60+ +ta[1])-(tb[0]*60+ +tb[1]);});break;
+      }
+
+      if(active.length){
+        var mp=active[0].price,xp=active[0].price,md=active[0].duration,xd=active[0].duration;
+        active.forEach(function(f){if(f.price<mp)mp=f.price;if(f.price>xp)xp=f.price;if(f.duration<md)md=f.duration;if(f.duration>xd)xd=f.duration;});
+        active.forEach(function(f){var pn=(f.price-mp)/(xp-mp||1),dn=(f.duration-md)/(xd-md||1);f.valueScore=pn*0.55+dn*0.45;});
+      }
+
+      var cheapest=active.length?active.reduce(function(a,b){return a.price<b.price?a:b;}):null;
+      var fastest=active.length?active.reduce(function(a,b){return a.duration<b.duration?a:b;}):null;
+      var bestValue=active.length?active.reduce(function(a,b){return a.valueScore<b.valueScore?a:b;}):null;
+
+      var fmt=formatDate(currentDate);
+      hd.textContent=fmt;
+      sd.innerHTML='One-way from Shanghai (PVG) to Hong Kong (HKG) &middot; '+fmt;
+
+      var rh='';
+      if(cheapest)rh+='<span class="rec-tag cheapest">Cheapest &middot; $'+cheapest.price+'</span>';
+      if(fastest&&fastest.id!==cheapest.id)rh+='<span class="rec-tag fastest">Fastest &middot; '+fastest.durationStr+'</span>';
+      if(bestValue&&bestValue.id!==cheapest.id&&bestValue.id!==fastest.id)rh+='<span class="rec-tag value">Best Value</span>';
+      recBar.innerHTML=rh;
+
+      var dc=active.filter(function(f){return f.type==='direct';}).length;
+      var cc=active.length-dc;
+      resCnt.textContent='Showing '+active.length+' flight'+(active.length!==1?'s':'')+' ('+dc+' direct, '+cc+' connecting)';
+
+      document.getElementById('totalFlights').textContent=active.length;
+      document.getElementById('totalAirlines').textContent=[...new Set(active.map(function(f){return f.airline;}))].length;
+      if(active.length){
+        var mn=active[0].price,mx=active[0].price;
+        active.forEach(function(f){if(f.price<mn)mn=f.price;if(f.price>mx)mx=f.price;});
+        document.getElementById('priceRange').textContent=mn===mx?'$'+mn:'$'+mn+' \u2013 $'+mx;
+      }else document.getElementById('priceRange').textContent='$0';
+
+      if(!active.length){grid.innerHTML='<div style="text-align:center;padding:60px 0;color:var(--text-muted);">No flights operate on this date. Try another day.</div>';return;}
+
+      var h='';
+      active.forEach(function(f,i){
+        var isRec=f.id===cheapest?.id||f.id===fastest?.id||f.id===bestValue?.id;
+        var ah=f.type==='direct'?'<div class="flight-arrow"><span class="duration">'+f.durationStr+'</span><svg viewBox="0 0 60 16"><line x1="0" y1="8" x2="48" y2="8"/><polyline points="40,3 48,8 40,13"/></svg><span class="layover-label">nonstop</span></div>'
+          :'<div class="flight-arrow"><span class="duration">'+f.durationStr+'</span><svg viewBox="0 0 60 16"><line x1="0" y1="8" x2="48" y2="8" stroke-dasharray="4 2"/><polyline points="40,3 48,8 40,13"/></svg><span class="layover-label">via '+f.layoverCity+'</span></div>';
+        var b='';
+        if(f.id===cheapest?.id)b+=' <span class="rec-tag cheapest" style="font-size:0.65rem;">CHEAPEST</span>';
+        if(f.id===fastest?.id)b+=' <span class="rec-tag fastest" style="font-size:0.65rem;">FASTEST</span>';
+        if(f.id===bestValue?.id)b+=' <span class="rec-tag value" style="font-size:0.65rem;">BEST VALUE</span>';
+        h+='<div class="flight-card fade-in'+(isRec?' recommended':'')+'"><div class="flight-airline"><div class="airline-logo" style="background:'+f.color+';">'+f.code+'</div><div class="airline-info"><h4>'+f.airline+'</h4><p><span class="airline-code">'+f.flightNo+'</span></p></div></div><div class="flight-time-col"><div class="flight-time"><div class="time">'+f.dep+'</div><div class="airport">PVG</div></div>'+ah+'<div class="flight-time"><div class="time">'+f.arr+'</div><div class="airport">HKG</div></div></div><div class="flight-price-col"><div class="flight-price"><span class="currency">$</span>'+f.price+'</div><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end;"><span class="flight-type '+f.type+'">'+f.type+'</span>'+b+'</div></div></div>';
+      });
+      grid.innerHTML=h;
+    }
+
+    function setFilter(t){currentFilter=t;document.querySelectorAll('.filter-badge').forEach(function(b){b.classList.toggle('active',b.dataset.filter===t);});render();}
+    srt.addEventListener('change',function(){currentSort=srt.value;render();});
+    air.addEventListener('change',function(){currentAirline=air.value;render();});
+    dp.addEventListener('change',function(){currentDate=dp.value;render();});
+    window.addEventListener('scroll',function(){document.getElementById('navbar').classList.toggle('scrolled',window.scrollY>40);});
+    render();
+  </script>
+</body>
+</html>
